@@ -1,14 +1,14 @@
 import { Router } from 'express';
 
-// import TransactionsRepository from '../repositories/TransactionsRepository';
-// import CreateTransactionService from '../services/CreateTransactionService';
-// import DeleteTransactionService from '../services/DeleteTransactionService';
-// import ImportTransactionsService from '../services/ImportTransactionsService';
+import TransactionsRepository from '../repositories/TransactionsRepository';
+import CreateTransactionService from '../services/CreateTransactionService';
+import DeleteTransactionService from '../services/DeleteTransactionService';
+import ImportTransactionsService from '../services/ImportTransactionsService';
 
 const transactionsRouter = Router();
 
 transactionsRouter.get('/', async (request, response) => {
-  // TODO
+  const { title, value, type, category } = request.body;
 });
 
 transactionsRouter.post('/', async (request, response) => {

@@ -1,7 +1,7 @@
-import { getRepository } from 'typeorm';
+import { getRepository, getCustomRepository } from 'typeorm';
 import AppError from '../errors/AppError';
-import Transaction from '../models/Transaction';
 import Category from '../models/Category';
+import TransactionsRepository from '../repositories/TransactionsRepository';
 
 interface Request {
   title: string;
@@ -9,7 +9,13 @@ interface Request {
   type: 'income' | 'outcome';
   category: string;
 }
-
+interface TransactionFormatted {
+  id: string;
+  title: string;
+  value: number;
+  type: string;
+  category: string;
+}
 class CreateTransactionService {
   private async findCategory(category: string): Promise<string> {
     const categoryRepository = getRepository(Category);
@@ -35,17 +41,34 @@ class CreateTransactionService {
     value,
     type,
     category,
-  }: Request): Promise<Transaction> {
-    const transactionRepository = getRepository(Transaction);
+  }: Request): Promise<TransactionFormatted> {
+    if (!(type === 'income' || type === 'outcome')) {
+      throw new AppError('Type of transaction is not valid.');
+    }
+    const transactionRepository = getCustomRepository(TransactionsRepository);
+    const { total } = await transactionRepository.getBalance();
+    if (type === 'outcome' && total - value < 0) {
+      throw new AppError('Outcome exceeds balance.');
+    }
     const category_id = await this.findCategory(category);
     const transaction = transactionRepository.create({
+      category: {
+        id: category_id,
+        title: category,
+      },
       title,
       value,
       type,
-      category_id,
     });
-    transactionRepository.save(transaction);
-    return transaction;
+    await transactionRepository.save(transaction);
+    const transactionFormatted = {
+      id: transaction.id,
+      title,
+      value,
+      type,
+      category,
+    };
+    return transactionFormatted;
   }
 }
 
